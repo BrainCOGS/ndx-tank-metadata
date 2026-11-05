@@ -26,7 +26,7 @@ groups:
     doc: Performance of correct responses in %
     required: false
   - name: session_end_time
-    dtype: text
+    dtype: isodatetime
     doc: Datetime when session ended
   - name: num_trials
     dtype: int
@@ -78,6 +78,8 @@ groups:
     required: false
   - name: sensorDotsPerRev
     dtype: float
+    dims:
+    - dim_0
     shape:
     - null
     doc: Sensor dots per ball revolution, obtained using the calibrateBall script
@@ -96,6 +98,8 @@ groups:
     required: false
   - name: colorAdjustment
     dtype: float
+    dims:
+    - dim_0
     shape:
     - null
     doc: '[R; G; B] scale factor for projector display'
@@ -114,6 +118,8 @@ groups:
     required: false
   - name: nidaqLines
     dtype: int
+    dims:
+    - dim_0
     shape:
     - null
     doc: NI-DAQ lines for the specified port

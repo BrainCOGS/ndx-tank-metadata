@@ -60,7 +60,7 @@ class LabMetaDataExtensionTest(unittest.TestCase):
             "commit_id": "test",
             "location": "test",
             "num_trials": 245,
-            "session_end_time": datetime.utcnow().isoformat(),
+            "session_end_time": datetime.now(timezone.utc),
             "rig": rig_extension,
             "mazes": maze_extension
         }

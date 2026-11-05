@@ -43,3 +43,17 @@ def test_spec_dtype_is_isodatetime():
     spec = get_type_map().namespace_catalog.get_spec("ndx-tank-metadata", "LabMetaDataExtension")
     # "datetime" is an alias that round-trips but fails pynwb.validate ("expected 'datetime', got 'utf'").
     assert spec.get_attribute("session_end_time").dtype == "isodatetime"
+
+
+def test_iso_string_is_rejected():
+    # session_end_time was text up to 0.2.0; callers still passing .isoformat() must fail loudly.
+    with pytest.raises(TypeError, match="session_end_time"):
+        make_lab_metadata(session_end_time="2026-08-07T12:33:05+00:00")
+
+
+def test_naive_datetime_writes_but_fails_validation(tmp_path):
+    from pynwb import validate
+
+    path = write_nwb(tmp_path / "naive.nwb", make_lab_metadata(session_end_time=datetime(2026, 8, 7, 12, 33, 5)))
+    errors = validate(path=str(path))
+    assert any("timezone" in str(e) for e in errors), errors

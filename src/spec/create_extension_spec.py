@@ -2,7 +2,7 @@ import os
 
 from pynwb.spec import NWBGroupSpec, NWBNamespaceBuilder, export_spec
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 
 def main(output_dir=None):
@@ -31,8 +31,9 @@ def main(output_dir=None):
         ("commit_id", "Commit id for session run", "text"),
         ("location", "Name of rig where session was run", "text"),
         ("session_performance", "Performance of correct responses in %", "float", False),
-        # ('session_end_time', 'Datetime when session ended', 'datetime'),
-        ("session_end_time", "Datetime when session ended", "text"),
+        # isodatetime attributes need hdmf>=6.0 (pynwb>=4.0); older hdmf cannot write them. The
+        # "datetime" alias round-trips too but fails pynwb.validate, so use the canonical name.
+        ("session_end_time", "Datetime when session ended", "isodatetime"),
         ("num_trials", "Number of trials during the session", "int"),
         (
             "timeElapsedFirstTrial",

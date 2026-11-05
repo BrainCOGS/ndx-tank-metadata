@@ -101,7 +101,7 @@ lab_metadata_dict = dict(
     commit_id='test',
     location='test',
     num_trials=245,
-    session_end_time=datetime.utcnow().isoformat(),
+    session_end_time=datetime.now().astimezone(),  # timezone-aware datetime
     rig=rig_extension,
     mazes=maze_extension
 )
