@@ -4,7 +4,7 @@ import math
 
 import numpy as np
 import pytest
-from tests.helpers import make_lab_metadata, write_nwb
+from tests.helpers import make_lab_metadata
 from ndx_tank_metadata import MazeExtension
 
 # The fields that main declared as MazeExtension *attributes* while the Python class also offers
@@ -109,10 +109,17 @@ def test_empty_table_round_trips(round_trip):
     assert back.colnames == ()
 
 
-def test_none_value_is_rejected_on_write(tmp_path):
-    # HDF5 has no null; a None cell cannot be stored. Callers must drop the column or use NaN.
-    with pytest.raises(Exception):
-        write_nwb(tmp_path / "none.nwb", make_lab_metadata(mazes=_mazes(dict(world=None))))
+def test_none_in_first_row_leaves_the_column_out(round_trip):
+    # HDF5 has no null. For an optional predefined column, None means "column not present".
+    back = _read_mazes(round_trip, _mazes(dict(world=None, lStart=5.0), dict(world=None, lStart=6.0)))
+    assert back.colnames == ("lStart",)
+    assert list(back["lStart"].data[:]) == [5.0, 6.0]
+
+
+def test_none_for_existing_column_is_rejected():
+    mazes = _mazes(dict(world=1, lStart=5.0))
+    with pytest.raises(TypeError, match="None is not allowed"):
+        mazes.add_row(world=None, lStart=6.0)
 
 
 def test_missing_value_in_later_row_is_rejected():
