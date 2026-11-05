@@ -28,6 +28,13 @@ def _field(**overrides):
     return Field(**values)
 
 
+def test_float32_is_only_declared_for_single_precision_sources(registry):
+    # Fields logged as double are float64. Only ViRMEn's reducePrecision trial fields may be float32.
+    for field in registry:
+        if field.dtype == "float32":
+            assert field.path.startswith("log.block.trial."), field.path
+
+
 def test_every_surveyed_field_has_one_entry(registry):
     paths = [f.path for f in registry]
     assert len(paths) == len(set(paths))
@@ -154,6 +161,15 @@ def test_decided_drops(registry):
         assert registry[path].destination == "drop", path
 
 
+def test_turn_hint_declares_its_missing_sentinel(registry):
+    assert registry["log.version.mazes.turnHint_Mem"].missing == -1
+
+
+def test_only_coded_turn_hint_declares_a_sentinel(registry):
+    # NaN into an integer field fails unless the registry declares what it becomes.
+    assert [f.path for f in registry if f.missing is not None] == ["log.version.mazes.turnHint_Mem"]
+
+
 def test_doorstop_licks_rule_is_recorded(registry):
     field = registry["log.block.trial.licks"]
     assert field.destination == "trial_column"
@@ -267,6 +283,17 @@ class TestValidation:
 
     def test_negative_code_is_valid(self):
         Registry([_field(codes={-1: "not specified", 0: "off"})])
+
+    def test_missing_must_be_a_declared_code(self):
+        with pytest.raises(RegistryError, match="missing"):
+            Registry([_field(codes={0: "off"}, missing=-1)])
+
+    def test_missing_on_a_non_integer_field_is_rejected(self):
+        with pytest.raises(RegistryError, match="missing"):
+            Registry([_field(dtype="float32", missing=-1)])
+
+    def test_zero_is_a_valid_missing_sentinel(self):
+        assert Registry([_field(codes={0: "not specified"}, missing=0)])["log.block.trial.x"].missing == 0
 
     def test_same_name_in_a_destination_is_rejected(self):
         with pytest.raises(RegistryError, match="both write"):
