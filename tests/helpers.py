@@ -10,10 +10,10 @@ SESSION_END = datetime(2026, 8, 7, 12, 33, 5, 250000, tzinfo=timezone.utc)
 
 RIG = dict(
     name="rig",
-    rig="VRTrain6",
-    simulationMode=0,
-    hasDAQ=1,
-    hasSyncComm=0,
+    rig_type="miniVR",
+    simulationMode=False,
+    hasDAQ=True,
+    hasSyncComm=False,
     minIterationDT=0.01,
     arduinoPort="COM5",
     sensorDotsPerRev=[1967.6, 1967.6, 1967.6, 1967.6],
@@ -33,7 +33,6 @@ RIG = dict(
     laserChannel=1,
     rightPuffChannel=2,
     leftPuffChannel=3,
-    webcam_name="Live! Cam Sync HD VF0770",
 )
 
 

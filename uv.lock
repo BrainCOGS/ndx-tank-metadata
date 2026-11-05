@@ -122,10 +122,12 @@ wheels = [
 
 [[package]]
 name = "ndx-tank-metadata"
-version = "0.3.0"
+version = "0.4.0"
 source = { editable = "." }
 dependencies = [
+    { name = "hdmf" },
     { name = "pynwb" },
+    { name = "ruamel-yaml" },
 ]
 
 [package.dev-dependencies]
@@ -135,7 +137,11 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pynwb", specifier = ">=4.0.0" }]
+requires-dist = [
+    { name = "hdmf", specifier = ">=6.2.0" },
+    { name = "pynwb", specifier = ">=4.2.0" },
+    { name = "ruamel-yaml" },
+]
 
 [package.metadata.requires-dev]
 dev = [

@@ -22,7 +22,7 @@ def test_full_rig_round_trips(round_trip):
             assert getattr(back, key) == value, key
 
 
-@pytest.mark.parametrize("attr", sorted(VECTOR_ATTRS))
+@pytest.mark.parametrize("attr", ["sensorDotsPerRev", "nidaqLines"])
 def test_one_element_vector_round_trips(round_trip, attr):
     value = VECTOR_ATTRS[attr][:1]
     back = round_trip(make_lab_metadata(rig=RigExtension(name="rig", **{attr: value}))).rig
@@ -45,6 +45,12 @@ def test_scalar_for_vector_attr_is_rejected(attr, scalar):
         RigExtension(name="rig", **{attr: scalar})
 
 
+@pytest.mark.parametrize("value", [[0.0, 0.4], [0.0, 0.4, 0.5, 0.6]])
+def test_color_adjustment_needs_exactly_rgb(value):
+    with pytest.raises((TypeError, ValueError), match="colorAdjustment"):
+        RigExtension(name="rig", colorAdjustment=value)
+
+
 @pytest.mark.parametrize("attr", ["ballCircumference", "rewardSize", "nidaqDevice"])
 def test_vector_for_scalar_attr_is_rejected(attr):
     with pytest.raises((TypeError, ValueError), match=attr):
@@ -52,16 +58,17 @@ def test_vector_for_scalar_attr_is_rejected(attr):
 
 
 def test_zero_valued_scalars_round_trip(round_trip):
-    rig = RigExtension(name="rig", rewardChannel=0, simulationMode=0, soundAdjustment=0.0)
+    rig = RigExtension(name="rig", rewardChannel=0, simulationMode=False, soundAdjustment=0.0)
     back = round_trip(make_lab_metadata(rig=rig)).rig
     assert back.rewardChannel == 0
-    assert back.simulationMode == 0
+    assert not back.simulationMode
+    assert back.simulationMode is not None
     assert back.soundAdjustment == 0.0
 
 
 def test_all_rig_attrs_are_optional(round_trip):
     back = round_trip(make_lab_metadata(rig=RigExtension(name="rig"))).rig
-    assert back.rig is None
+    assert back.rig_type is None
     assert back.sensorDotsPerRev is None
 
 

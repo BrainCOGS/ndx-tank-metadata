@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ndx-tank-metadata"
-version = "0.3.0"
+version = "0.4.0"
 description = "NWB:N extension for storing metadata for Tank lab"
 readme = "README.md"
 license = "BSD-3-Clause"
@@ -16,7 +16,9 @@ authors = [
     { name = "Christian Tabedzki", email = "ct5868@princeton.edu"  },
 ]
 dependencies = [
-    "pynwb>=4.0.0",
+    "hdmf>=6.2.0",
+    "pynwb>=4.2.0",
+    "ruamel.yaml",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",

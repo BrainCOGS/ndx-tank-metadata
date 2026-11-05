@@ -13,6 +13,7 @@ import pytest
 REPO = Path(__file__).resolve().parents[1]
 SCRATCH = Path(os.environ.get("PACKAGING_TMPDIR", tempfile.gettempdir()))
 SPEC_FILES = {"ndx-tank-metadata.namespace.yaml", "ndx-tank-metadata.extensions.yaml"}
+REGISTRY_IN_WHEEL = "ndx_tank_metadata/virmen_fields.yaml"
 STRAY = {"__pycache__", "tests", ".claude", "uv.lock", ".specify"}
 
 
@@ -47,7 +48,7 @@ def test_distribution_installs_and_loads_namespace(artifacts, kind):
     work, wheel, sdist = artifacts
     files = wheel_files(wheel)
     assert {n for n in files if n.endswith((".yaml", ".yml"))} == {
-        f"ndx_tank_metadata/spec/{name}" for name in SPEC_FILES
+        REGISTRY_IN_WHEEL, *(f"ndx_tank_metadata/spec/{name}" for name in SPEC_FILES)
     }
     assert not any(STRAY.intersection(Path(n).parts) or n.endswith(".pyc") for n in files)
     assert all(n.startswith(("ndx_tank_metadata/", "ndx_tank_metadata-")) for n in files)
@@ -91,6 +92,8 @@ lab = ndx.LabMetaDataExtension(
     stimulus_bank_path="test", commit_id="test", location="test", num_trials=1,
     session_end_time=datetime.now(timezone.utc), rig=rig, mazes=mazes)
 assert lab.rig is rig and lab.mazes is mazes
+from ndx_tank_metadata.registry import load_registry
+assert load_registry()["log.block.trial.choice"].in_spec
 v = version("ndx-tank-metadata")
 assert getattr(ndx, "__version__", v) == v
 assert YAML(typ="safe").load((spec / "ndx-tank-metadata.namespace.yaml").read_text())["namespaces"][0]["version"] == v
@@ -115,6 +118,10 @@ def test_regeneration_writes_only_root_spec_from_project_version():
         generator.parent.mkdir(parents=True)
         (checkout / "spec").mkdir()
         shutil.copyfile(REPO / "src" / "spec" / generator.name, generator)
+        package = checkout / "src" / "pynwb" / "ndx_tank_metadata"
+        package.mkdir(parents=True)
+        for name in ("registry.py", "virmen_fields.yaml"):
+            shutil.copyfile(REPO / "src" / "pynwb" / "ndx_tank_metadata" / name, package / name)
         (checkout / "pyproject.toml").write_text('[project]\nversion = "9.8.7"\n')
         run(sys.executable, "-I", str(generator), cwd=checkout)
         for name in SPEC_FILES:

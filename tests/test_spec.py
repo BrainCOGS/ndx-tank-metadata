@@ -65,7 +65,7 @@ def test_written_file_passes_pynwb_validate(tmp_path):
     from ndx_tank_metadata import MazeExtension
 
     mazes = MazeExtension(name="mazes", description="mazes")
-    mazes.add_row(world=1, lStart=5.0, rule="StartCycle < EndCycle Left", forcedChoice=0)
+    mazes.add_row(world=1, lStart=5.0, turnHint_Mem=0, turnHint_Puff=False)
     path = write_nwb(tmp_path / "valid.nwb", make_lab_metadata(mazes=mazes))
     errors = validate(path=str(path))
     errors = errors[0] if isinstance(errors, tuple) else errors
@@ -75,3 +75,13 @@ def test_written_file_passes_pynwb_validate(tmp_path):
 def test_written_file_caches_the_extension_namespace(tmp_path):
     path = write_nwb(tmp_path / "cached.nwb", make_lab_metadata())
     assert "ndx-tank-metadata" in NWBHDF5IO.get_namespaces(path=str(path))
+
+
+def test_readme_example_runs(tmp_path, monkeypatch):
+    readme = (REPO / "README.md").read_text()
+    code = re.search(r"```python\n(.*?)```", readme, re.DOTALL).group(1)
+    monkeypatch.chdir(tmp_path)
+    exec(compile(code, "README.md", "exec"), {})
+    errors = validate(path="test_labmetadata.nwb")
+    errors = errors[0] if isinstance(errors, tuple) else errors
+    assert list(errors) == []
