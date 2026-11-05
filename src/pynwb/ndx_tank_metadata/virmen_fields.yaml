@@ -1951,6 +1951,7 @@ fields:
   dtype: int8
   shape: []
   transform: empty_to_missing
+  missing: -1
   in_spec: true
   description: "Whether the turn hint is visible in the memory region for this level."
   codes:

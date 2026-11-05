@@ -53,7 +53,7 @@ TRANSFORMS = frozenset(
         "datevec",  # MATLAB [Y M D h m s], stored as a timezone-aware datetime
         "seconds_from_session_start",  # datevec, stored as seconds since the session started
         "str2double",  # number logged as a MATLAB expression string
-        "empty_to_missing",  # [] becomes NaN or the -1 "not specified" code in a column, and leaves an attribute out
+        "empty_to_missing",  # [] becomes NaN or the declared missing code in a column, and leaves an attribute out
         "complementary_pair",  # scalar p becomes [p, 1 - p]
         "pad_pair",  # scalar x becomes [x, NaN]
         "left_right",  # {left, right} cell or 2xN matrix, stored as <name>_left and <name>_right
@@ -80,6 +80,7 @@ class Field:
     unit: str | None = None
     codes: dict | None = field(default=None, hash=False)
     transform: str | None = None
+    missing: int | None = None  # integer code stored for NaN or []; other integer fields reject NaN
     in_spec: bool = False
     required: bool = False
     meaning_known: bool = True
@@ -136,6 +137,8 @@ def _check_field(entry):
         raise RegistryError(f"{path}: required needs in_spec")
     if entry.codes:
         _check_codes(entry)
+    if entry.missing is not None and (entry.dtype not in _INT_RANGES or entry.missing not in (entry.codes or {})):
+        raise RegistryError(f"{path}: missing {entry.missing} must be a declared code of an integer field")
 
 
 class Registry:
