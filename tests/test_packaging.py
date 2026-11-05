@@ -58,7 +58,11 @@ def test_distribution_installs_and_loads_namespace(artifacts, kind):
     if kind == "sdist":
         source = work / "source"
         with tarfile.open(sdist) as archive:
-            assert not any(STRAY.intersection(Path(n).parts) for n in archive.getnames())
+            assert not any(
+                {"__pycache__", ".claude", ".specify", "matnwb"}.intersection(Path(n).parts)
+                or any(part in {".git", ".github", ".gitmodules", ".gitattributes"} for part in Path(n).parts)
+                for n in archive.getnames()
+            )
             assert not any("/src/pynwb/ndx_tank_metadata/spec/" in n for n in archive.getnames())
             archive.extractall(source, filter="data")
         run("uv", "build", "--python", "3.13", "--wheel", "--out-dir", str(work / "rebuilt"),

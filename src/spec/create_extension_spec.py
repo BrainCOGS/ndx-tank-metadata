@@ -1,5 +1,4 @@
 from pathlib import Path
-from shutil import copyfile
 
 try:
     import tomllib
@@ -126,12 +125,6 @@ def main(output_dir=None):
     directory = REPO / "spec" if output_dir is None else Path(output_dir)
     directory.mkdir(parents=True, exist_ok=True)
     export_spec(ns_builder, [LabMetaDataExtension, RigExtension, MazeExtension], str(directory))
-    if output_dir is None:
-        # Synchronize runtime data during regeneration, never as a build side effect.
-        package_spec = REPO / "src" / "pynwb" / "ndx_tank_metadata" / "spec"
-        package_spec.mkdir(parents=True, exist_ok=True)
-        for name in ("ndx-tank-metadata.namespace.yaml", "ndx-tank-metadata.extensions.yaml"):
-            copyfile(directory / name, package_spec / name)
 
 
 if __name__ == "__main__":
