@@ -93,3 +93,29 @@ print(json.dumps({"version": v, "spec": {p.name: p.read_text() for p in spec.glo
     installed = json.loads(output)
     assert installed["spec"] == expected
     assert wheel.name.split("-")[1] == installed["version"]
+
+
+@pytest.mark.packaging
+def test_regeneration_updates_both_copies_from_project_version():
+    # Stage the actual generator without an installed copy of this project nearby.
+    import shutil
+    import sys
+
+    from ruamel.yaml import YAML
+
+    with tempfile.TemporaryDirectory(prefix="ndx-generator-", dir=SCRATCH) as directory:
+        checkout = Path(directory)
+        generator = checkout / "src" / "spec" / "create_extension_spec.py"
+        generator.parent.mkdir(parents=True)
+        (checkout / "spec").mkdir()
+        (checkout / "src" / "pynwb" / "ndx_tank_metadata" / "spec").mkdir(parents=True)
+        shutil.copyfile(REPO / "src" / "spec" / generator.name, generator)
+        (checkout / "pyproject.toml").write_text('[project]\nversion = "9.8.7"\n')
+        run(sys.executable, "-I", str(generator), cwd=checkout)
+        for name in SPEC_FILES:
+            public = checkout / "spec" / name
+            packaged = checkout / "src" / "pynwb" / "ndx_tank_metadata" / "spec" / name
+            assert packaged.is_file(), f"generator did not update package spec: {name}"
+            assert public.read_bytes() == packaged.read_bytes()
+        ns = YAML(typ="safe").load((checkout / "spec" / "ndx-tank-metadata.namespace.yaml").read_text())
+        assert ns["namespaces"][0]["version"] == "9.8.7"
