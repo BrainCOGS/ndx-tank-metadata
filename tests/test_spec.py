@@ -12,7 +12,7 @@ from tests.helpers import make_lab_metadata, write_nwb
 
 REPO = Path(__file__).resolve().parent.parent
 GENERATOR = REPO / "src" / "spec" / "create_extension_spec.py"
-SPEC_DIRS = [REPO / "spec", REPO / "src" / "pynwb" / "ndx_tank_metadata" / "spec"]
+SPEC_DIRS = [REPO / "spec"]
 SPEC_FILES = ["ndx-tank-metadata.namespace.yaml", "ndx-tank-metadata.extensions.yaml"]
 
 
@@ -34,7 +34,7 @@ def generated(tmp_path_factory):
     return out
 
 
-@pytest.mark.parametrize("spec_dir", SPEC_DIRS, ids=["spec", "package-spec"])
+@pytest.mark.parametrize("spec_dir", SPEC_DIRS, ids=["spec"])
 @pytest.mark.parametrize("filename", SPEC_FILES)
 def test_committed_yaml_matches_generator(generated, spec_dir, filename):
     # Compare parsed YAML: line wrapping of long docs depends on the ruamel.yaml version.

@@ -59,16 +59,18 @@ def test_distribution_installs_and_loads_namespace(artifacts, kind):
         source = work / "source"
         with tarfile.open(sdist) as archive:
             assert not any(STRAY.intersection(Path(n).parts) for n in archive.getnames())
+            assert not any("/src/pynwb/ndx_tank_metadata/spec/" in n for n in archive.getnames())
             archive.extractall(source, filter="data")
         run("uv", "build", "--python", "3.13", "--wheel", "--out-dir", str(work / "rebuilt"),
             cwd=next(source.iterdir()))
         # Compare every file, including metadata; RECORD describes the other files.
-        assert wheel_files(next((work / "rebuilt").glob("*.whl"))) == files
+        rebuilt_wheel = next((work / "rebuilt").glob("*.whl"))
+        assert wheel_files(rebuilt_wheel) == files
 
     venv = work / f"venv-{kind}"
     run("uv", "venv", "--python", "3.13", str(venv), cwd=work)
     python = str(venv / "bin" / "python")
-    run("uv", "pip", "install", "--python", python, str(wheel if kind == "wheel" else sdist), cwd=work)
+    run("uv", "pip", "install", "--python", python, str(wheel if kind == "wheel" else rebuilt_wheel), cwd=work)
     output = run(python, "-I", "-c", '''
 from datetime import datetime, timezone
 from importlib.metadata import version
@@ -96,7 +98,7 @@ print(json.dumps({"version": v, "spec": {p.name: p.read_text() for p in spec.glo
 
 
 @pytest.mark.packaging
-def test_regeneration_updates_both_copies_from_project_version():
+def test_regeneration_writes_only_root_spec_from_project_version():
     # Stage the actual generator without an installed copy of this project nearby.
     import shutil
     import sys
@@ -108,14 +110,39 @@ def test_regeneration_updates_both_copies_from_project_version():
         generator = checkout / "src" / "spec" / "create_extension_spec.py"
         generator.parent.mkdir(parents=True)
         (checkout / "spec").mkdir()
-        (checkout / "src" / "pynwb" / "ndx_tank_metadata" / "spec").mkdir(parents=True)
         shutil.copyfile(REPO / "src" / "spec" / generator.name, generator)
         (checkout / "pyproject.toml").write_text('[project]\nversion = "9.8.7"\n')
         run(sys.executable, "-I", str(generator), cwd=checkout)
         for name in SPEC_FILES:
             public = checkout / "spec" / name
-            packaged = checkout / "src" / "pynwb" / "ndx_tank_metadata" / "spec" / name
-            assert packaged.is_file(), f"generator did not update package spec: {name}"
-            assert public.read_bytes() == packaged.read_bytes()
+            assert public.is_file()
+        assert not (checkout / "src" / "pynwb" / "ndx_tank_metadata" / "spec").exists()
         ns = YAML(typ="safe").load((checkout / "spec" / "ndx-tank-metadata.namespace.yaml").read_text())
         assert ns["namespaces"][0]["version"] == "9.8.7"
+
+
+def test_source_has_only_root_spec():
+    assert not (REPO / "src" / "pynwb" / "ndx_tank_metadata" / "spec").exists()
+
+
+@pytest.mark.packaging
+def test_editable_install_loads_root_spec_once(artifacts):
+    work, _, _ = artifacts
+    venv = work / "venv-editable"
+    run("uv", "venv", "--python", "3.13", str(venv), cwd=work)
+    python = str(venv / "bin" / "python")
+    run("uv", "pip", "install", "--python", python, "-e", str(REPO), cwd=work)
+    output = run(python, "-I", "-c", """
+from pathlib import Path
+from unittest.mock import patch
+import json
+import pynwb
+with patch("pynwb.load_namespaces", wraps=pynwb.load_namespaces) as load:
+    import ndx_tank_metadata as ndx
+assert load.call_count == 1
+namespace = Path(load.call_args.args[0]).resolve()
+assert not (Path(ndx.__file__).parent / "spec").exists()
+assert ndx.MazeExtension(name="mazes", description="mazes") is not None
+print(json.dumps(str(namespace)))
+""", cwd=work)
+    assert Path(json.loads(output)) == REPO / "spec" / "ndx-tank-metadata.namespace.yaml"
