@@ -122,6 +122,7 @@ wheels = [
 
 [[package]]
 name = "ndx-tank-metadata"
+version = "0.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "pynwb" },
@@ -130,13 +131,17 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "pytest" },
+    { name = "tomli", marker = "python_full_version < '3.11'" },
 ]
 
 [package.metadata]
 requires-dist = [{ name = "pynwb", specifier = ">=4.0.0" }]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pytest", specifier = ">=8.3.5" }]
+dev = [
+    { name = "pytest", specifier = ">=8.3.5" },
+    { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2" },
+]
 
 [[package]]
 name = "numpy"

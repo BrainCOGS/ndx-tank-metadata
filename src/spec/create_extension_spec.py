@@ -1,8 +1,17 @@
-import os
+from pathlib import Path
+from shutil import copyfile
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.10 (development dependency)
+    import tomli as tomllib
 
 from pynwb.spec import NWBGroupSpec, NWBNamespaceBuilder, export_spec
 
-__version__ = "0.3.0"
+REPO = Path(__file__).resolve().parents[2]
+# The checkout version takes precedence over potentially stale installed metadata.
+with (REPO / "pyproject.toml").open("rb") as project_file:
+    __version__ = tomllib.load(project_file)["project"]["version"]
 
 
 def main(output_dir=None):
@@ -113,10 +122,16 @@ def main(output_dir=None):
     # MazeExtension has no attributes of its own: each maze field is an optional column (one row per
     # maze), declared in Python in ndx_tank_metadata/maze_extension.py.
 
-    # export the extension to yaml files in the spec folder
+    # Export once: export_spec mutates the namespace builder by adding its types.
+    directory = REPO / "spec" if output_dir is None else Path(output_dir)
+    directory.mkdir(parents=True, exist_ok=True)
+    export_spec(ns_builder, [LabMetaDataExtension, RigExtension, MazeExtension], str(directory))
     if output_dir is None:
-        output_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "spec"))
-    export_spec(ns_builder, [LabMetaDataExtension, RigExtension, MazeExtension], output_dir)
+        # Synchronize runtime data during regeneration, never as a build side effect.
+        package_spec = REPO / "src" / "pynwb" / "ndx_tank_metadata" / "spec"
+        package_spec.mkdir(parents=True, exist_ok=True)
+        for name in ("ndx-tank-metadata.namespace.yaml", "ndx-tank-metadata.extensions.yaml"):
+            copyfile(directory / name, package_spec / name)
 
 
 if __name__ == "__main__":
