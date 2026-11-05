@@ -5,6 +5,7 @@ try:
 except ModuleNotFoundError:  # Python 3.10 (development dependency)
     import tomli as tomllib
 
+from hdmf.spec import AttributeSpec
 from pynwb.spec import NWBGroupSpec, NWBNamespaceBuilder, export_spec
 
 REPO = Path(__file__).resolve().parents[2]
@@ -60,7 +61,7 @@ def main(output_dir=None):
     for attribute in attributes:
         name, doc, dtype = attribute[:3]
         required = attribute[3] if len(attribute) > 3 else True
-        LabMetaDataExtension.add_attribute(name=name, doc=doc, dtype=dtype, required=required)
+        LabMetaDataExtension.set_attribute(AttributeSpec(name=name, doc=doc, dtype=dtype, required=required))
 
     RigExtension = NWBGroupSpec(
         doc="type for storing rig information",
@@ -97,20 +98,18 @@ def main(output_dir=None):
 
     for attr, datatype, description in rig_attr:
         if attr in ["sensorDotsPerRev", "colorAdjustment", "nidaqLines"]:
-            RigExtension.add_attribute(name=attr, doc=description, dtype=datatype, shape=(None,), required=False)
+            RigExtension.set_attribute(
+                AttributeSpec(name=attr, doc=description, dtype=datatype, shape=(None,), required=False)
+            )
         else:
-            RigExtension.add_attribute(name=attr, doc=description, dtype=datatype, required=False)
+            RigExtension.set_attribute(AttributeSpec(name=attr, doc=description, dtype=datatype, required=False))
 
-    LabMetaDataExtension.add_group(
-        name="rig",
-        neurodata_type_inc="RigExtension",
-        doc="type for storing rig information",
+    LabMetaDataExtension.set_group(
+        NWBGroupSpec(name="rig", neurodata_type_inc="RigExtension", doc="type for storing rig information")
     )
 
-    LabMetaDataExtension.add_group(
-        name="mazes",
-        neurodata_type_inc="MazeExtension",
-        doc="type for storing maze information",
+    LabMetaDataExtension.set_group(
+        NWBGroupSpec(name="mazes", neurodata_type_inc="MazeExtension", doc="type for storing maze information")
     )
 
     MazeExtension = NWBGroupSpec(
