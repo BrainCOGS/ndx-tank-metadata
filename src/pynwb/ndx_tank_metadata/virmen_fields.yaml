@@ -1198,7 +1198,7 @@ fields:
   dtype: float32
   shape: [null, 3]
   description: "position."
-  notes: "Columns 0-1: position as a SpatialSeries, in cm. Column 2: view angle as its own series, in rad; it is unwrapped, so it can run far past 2*pi, and it integrates velocity[:, 2]."
+  notes: "Columns 0-1: position as a SpatialSeries, in cm. Column 2: view angle as its own TimeSeries, in rad; it is unwrapped, so it can run far past 2*pi, which a radian SpatialSeries may not, and it integrates velocity[:, 2]."
 - path: log.block.trial.probeTrial
   destination: trial_column
   name: "probeTrial"
