@@ -1243,7 +1243,7 @@ fields:
   dtype: float32
   shape: [null, 2]
   description: "Per-iteration raw ball input (2 cols)"
-  notes: "Sometimes left at its preallocated size; truncate to iterations rows."
+  notes: "Indexed by iteration into a preallocated array that can be longer or shorter than the trial; stored with one row per position row, trimming unused rows or padding with NaN."
 - path: log.block.trial.rewardBlockIdx
   destination: trial_column
   name: "rewardBlockIdx"
