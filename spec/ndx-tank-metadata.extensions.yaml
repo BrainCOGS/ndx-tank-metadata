@@ -1181,6 +1181,13 @@ groups:
     doc: variable tracking pro/anti training stage, since mazeID is used to handle
       context switching.
     quantity: '?'
+  - name: wall_clock_start
+    neurodata_type_inc: VectorData
+    dtype: float64
+    doc: "Wall-clock time ViRMEn stamped on this block, in seconds since session_start_time.
+      The block's start_time is on the session clock and can differ from this stamp:
+      a block stamped during setup predates the elapsed clock. Unit: s."
+    quantity: '?'
   - name: stimulusBank
     neurodata_type_inc: VectorData
     dtype: text

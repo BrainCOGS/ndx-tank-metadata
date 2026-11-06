@@ -631,13 +631,14 @@ fields:
   description: "variable tracking pro/anti training stage, since mazeID is used to handle context switching."
 - path: log.block.start
   destination: epoch_column
-  name: "start_time"
+  name: "wall_clock_start"
   dtype: float64
   shape: []
   unit: "s"
   transform: seconds_from_session_start
-  description: "Datetime when the block started, stored as seconds since the session started."
-  notes: "Inherited TimeIntervals column; stop_time is start + duration."
+  in_spec: true
+  description: "Wall-clock time ViRMEn stamped on this block, in seconds since session_start_time. The block's start_time is on the session clock and can differ from this stamp: a block stamped during setup predates the elapsed clock."
+  notes: "start_time and stop_time come from the elapsed clock through derived.clock_offset; see the clock_anchor settings row."
 - path: log.block.stimRegime
   destination: drop
   meaning_known: false
@@ -1238,12 +1239,9 @@ fields:
   in_spec: true
   description: "Y positions of the tactile cues (air puffs), on each side."
 - path: log.block.trial.rawBallInput
-  destination: timeseries
-  name: "RawBallInput"
-  dtype: float32
-  shape: [null, 2]
+  destination: drop
   description: "Per-iteration raw ball input (2 cols)"
-  notes: "Indexed by iteration into a preallocated array that can be longer or shorter than the trial; stored with one row per position row, trimming unused rows or padding with NaN."
+  notes: "Dropped by project decision (2026-11-05): not in the original CatalystNeuro conversion, and present in only one log. It holds steering captured before velocity is clamped, so velocity can't rebuild it; it stays in the raw log."
 - path: log.block.trial.rewardBlockIdx
   destination: trial_column
   name: "rewardBlockIdx"

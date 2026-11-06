@@ -322,3 +322,17 @@ class TestValidation:
         path.write_text("fields:\n- path: a\n  destination: drop\n  description: d\n  notes: n\n  experimenters: x\n")
         with pytest.raises(RegistryError, match="experimenters"):
             load_registry(path)
+
+
+class TestClockDecisions:
+    def test_block_wall_clock_stamp_keeps_its_own_epoch_column(self):
+        # start_time is on the session clock; the stamp can disagree with it, so it's stored separately.
+        field = load_registry()["log.block.start"]
+        assert field.destination == "epoch_column"
+        assert field.name == "wall_clock_start"
+        assert field.in_spec
+
+    def test_raw_ball_input_is_a_recorded_drop(self):
+        field = load_registry()["log.block.trial.rawBallInput"]
+        assert field.destination == "drop"
+        assert "stays in the raw log" in field.notes
