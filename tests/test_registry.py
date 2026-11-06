@@ -336,3 +336,11 @@ class TestClockDecisions:
         field = load_registry()["log.block.trial.rawBallInput"]
         assert field.destination == "drop"
         assert "stays in the raw log" in field.notes
+
+
+def test_difficulty_set_holds_a_percent_mix_or_a_scalar():
+    """Some logs store one false, others the percent of easy, medium and hard trials, such as [50, 50, 0]."""
+    field = load_registry()["log.block.trialParams.difficultySet"]
+    assert field.dtype == "float64"
+    assert field.shape == (None,)
+    assert "easy, medium and hard" in field.description

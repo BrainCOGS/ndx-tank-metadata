@@ -1624,10 +1624,10 @@ fields:
 - path: log.block.trialParams.difficultySet
   destination: epoch_column
   name: "trialParams_difficultySet"
-  dtype: bool
-  shape: []
+  dtype: float64
+  shape: [null]
   in_spec: true
-  description: "Exact trial is repeated after error."
+  description: "Percent of easy, medium and hard trials, such as [50, 50, 0]. A single value means the mix wasn't used; those logs store false, kept as 0."
 - path: log.block.trialParams.lCue
   destination: epoch_column
   name: "trialParams_lCue"

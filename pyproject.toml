@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ndx-tank-metadata"
-version = "0.4.0"
+version = "0.4.1"
 description = "NWB:N extension for storing metadata for Tank lab"
 readme = "README.md"
 license = "BSD-3-Clause"

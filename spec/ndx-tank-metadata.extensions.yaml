@@ -1220,8 +1220,14 @@ groups:
     quantity: '?'
   - name: trialParams_difficultySet
     neurodata_type_inc: VectorData
-    dtype: bool
-    doc: Exact trial is repeated after error.
+    dtype: float64
+    doc: Percent of easy, medium and hard trials, such as [50, 50, 0]. A single value
+      means the mix wasn't used; those logs store false, kept as 0.
+    quantity: '?'
+  - name: trialParams_difficultySet_index
+    neurodata_type_inc: VectorIndex
+    doc: Index into trialParams_difficultySet, which has a variable number of values
+      per row.
     quantity: '?'
   - name: trialParams_lCue
     neurodata_type_inc: VectorData

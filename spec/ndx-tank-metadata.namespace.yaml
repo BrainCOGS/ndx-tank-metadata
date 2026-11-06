@@ -19,4 +19,4 @@ namespaces:
     - VectorIndex
     - DynamicTableRegion
   - source: ndx-tank-metadata.extensions.yaml
-  version: 0.4.0
+  version: 0.4.1
