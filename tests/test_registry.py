@@ -218,6 +218,15 @@ def test_licks_expand_to_iteration_and_value(registry):
     assert registry["log.block.trial.licks"].nwb_names == ("licks_iteration", "licks_value")
 
 
+def test_state_ports_are_one_bool_array_per_lick(registry):
+    field = registry["log.block.trial.state_ports"]
+    assert (field.destination, field.name, field.dtype, field.shape, field.transform) == (
+        "trial_column", "state_ports", "bool", (None, 2, 5), "per_lick")
+    assert field.in_spec
+    assert "licks_iteration" in field.description
+    assert "counter" in field.notes.lower()
+
+
 def test_scalar_fields_have_one_nwb_name(registry):
     assert registry["log.block.trial.iCueEntry"].nwb_names == ("iCueEntry",)
 
@@ -294,6 +303,22 @@ class TestValidation:
 
     def test_zero_is_a_valid_missing_sentinel(self):
         assert Registry([_field(codes={0: "not specified"}, missing=0)])["log.block.trial.x"].missing == 0
+
+    def test_per_lick_field_is_accepted_with_a_ragged_array_shape(self):
+        Registry([_field(dtype="bool", shape=(None, 2, 5), transform="per_lick")])
+
+    @pytest.mark.parametrize("shape", [(), (None,), (None, None), (2, 5)])
+    def test_per_lick_needs_one_variable_dimension_then_fixed_ones(self, shape):
+        with pytest.raises(RegistryError, match="per_lick"):
+            Registry([_field(dtype="bool", shape=shape, transform="per_lick")])
+
+    @pytest.mark.parametrize("shape", [(2, None), (None, 2, None), (0,), (None, 0)])
+    def test_variable_dimensions_come_first_and_fixed_ones_are_positive(self, shape):
+        with pytest.raises(RegistryError, match="shape"):
+            Registry([_field(shape=shape)])
+
+    def test_an_attribute_may_have_a_fixed_dimension_before_a_variable_one(self):
+        Registry([_field(destination="animal_attribute", shape=(2, None))])
 
     def test_same_name_in_a_destination_is_rejected(self):
         with pytest.raises(RegistryError, match="both write"):

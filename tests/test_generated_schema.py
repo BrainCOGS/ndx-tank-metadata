@@ -7,6 +7,7 @@ from pathlib import Path
 import h5py
 import numpy as np
 import pytest
+from hdmf.build.warnings import IncorrectDatasetShapeBuildWarning
 from hdmf.common import DynamicTableRegion, VectorData, VectorIndex
 from pynwb import NWBHDF5IO, NWBFile, get_class, get_type_map, validate
 
@@ -80,6 +81,12 @@ def _make_columns(destination, n_rows):
                 flat = VectorData(name=name, description=description, data=_sample(field.dtype, n_rows * 2))
                 index = VectorIndex(name=f"{name}_index", data=np.arange(1, n_rows + 1, dtype="uint32") * 2, target=flat)
                 columns += [flat, index]
+            elif field.shape[0] is None and None not in field.shape[1:]:
+                fixed = field.shape[1:]
+                values = np.resize(_sample(field.dtype, int(np.prod(fixed))), (n_rows * 2, *fixed))
+                flat = VectorData(name=name, description=description, data=values)
+                index = VectorIndex(name=f"{name}_index", data=np.arange(1, n_rows + 1, dtype="uint32") * 2, target=flat)
+                columns += [flat, index]
             elif field.shape == (None, None):
                 flat = VectorData(name=name, description=description, data=_sample(field.dtype, n_rows * 2))
                 inner = VectorIndex(name=f"{name}_index", data=np.arange(1, n_rows * 2 + 1, dtype="uint32"), target=flat)
@@ -141,13 +148,23 @@ class TestSpecMatchesRegistry:
             for name in field.nwb_names:
                 if name in INHERITED_COLUMNS or field.dtype == "region":
                     continue
-                if field.shape == (None,):
+                if field.shape == (None,) or (len(field.shape) > 1 and field.shape[0] is None and None not in field.shape[1:]):
                     assert declared[f"{name}_index"].neurodata_type_inc == "VectorIndex", name
                     assert f"{name}_index_index" not in declared
                 elif field.shape == (None, None):
                     assert declared[f"{name}_index_index"].neurodata_type_inc == "VectorIndex", name
                 else:
                     assert f"{name}_index" not in declared, name
+
+    def test_ragged_arrays_declare_the_shape_of_each_value(self):
+        declared = {d.name: d for d in _spec("VirmenTrials").datasets}
+        assert declared["state_ports"].shape == [None, 2, 5]
+        assert declared["state_ports"].dtype == "bool"
+
+    def test_fixed_columns_still_declare_one_row_per_trial(self):
+        declared = {d.name: d for d in _spec("VirmenTrials").datasets}
+        assert declared["startPosition"].shape == [None, 4]
+        assert declared["startPosition"].dims[0] == "num_rows"
 
     def test_stimulus_pair_is_a_region_column(self):
         declared = {d.name: d for d in _spec("VirmenTrials").datasets}
@@ -253,6 +270,31 @@ class TestTrialsAndEpochs:
             back = io.read().trials["cuePos_left"]
             assert [len(back[i]) for i in range(3)] == [0, 2, 0]
             assert back.target.data.dtype == np.dtype("float32")
+
+    def test_per_lick_arrays_round_trip_with_empty_and_single_lick_trials(self, tmp_path):
+        ports = np.array([[[1, 0, 0, 1, 1], [1, 1, 1, 1, 1]], [[1, 1, 1, 1, 1], [0, 0, 1, 1, 1]], [[0, 0, 1, 1, 1], [0, 0, 1, 1, 1]]], dtype=bool)
+        flat = VectorData(name="state_ports", description="d", data=ports)
+        index = VectorIndex(name="state_ports_index", data=np.array([0, 1, 1, 3], dtype="uint32"), target=flat)
+        table = VirmenTrials(name="trials", description="t", columns=[*_time_columns(4), flat, index])
+        path = _write_read_validate(tmp_path, lambda nwbfile: setattr(nwbfile, "trials", table))
+        with NWBHDF5IO(str(path), "r", load_namespaces=True) as io:
+            back = io.read().trials["state_ports"]
+            assert [np.asarray(back[i]).shape for i in range(4)] == [(0, 2, 5), (1, 2, 5), (0, 2, 5), (2, 2, 5)]
+            assert np.array_equal(back.target.data[:], ports)
+            assert back.target.data.dtype == np.dtype(bool)
+
+    def test_a_ragged_array_of_the_wrong_shape_fails_validation(self, tmp_path):
+        flat = VectorData(name="state_ports", description="d", data=np.ones((2, 5, 2), dtype=bool))
+        index = VectorIndex(name="state_ports_index", data=np.array([2], dtype="uint32"), target=flat)
+        table = VirmenTrials(name="trials", description="t", columns=[*_time_columns(1), flat, index])
+        nwbfile = NWBFile("description", "id", SESSION_START)
+        nwbfile.trials = table
+        path = tmp_path / "bad.nwb"
+        with NWBHDF5IO(str(path), "w") as io, pytest.warns(IncorrectDatasetShapeBuildWarning):
+            io.write(nwbfile)
+        errors = validate(path=str(path))
+        errors = errors[0] if isinstance(errors, tuple) else errors
+        assert any("state_ports" in str(error) for error in errors)
 
     def test_nan_and_inf_round_trip(self, tmp_path):
         values = np.array([np.nan, np.inf], dtype="float64")

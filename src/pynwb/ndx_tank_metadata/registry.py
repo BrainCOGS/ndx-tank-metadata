@@ -58,6 +58,7 @@ TRANSFORMS = frozenset(
         "pad_pair",  # scalar x becomes [x, NaN]
         "left_right",  # {left, right} cell or 2xN matrix, stored as <name>_left and <name>_right
         "licks",  # 2xN [iteration; value], stored as <name>_iteration and <name>_value
+        "per_lick",  # cell of one fixed-shape array per lick, stored ragged in the order of licks_iteration
     }
 )
 _NAME_SUFFIXES = {"left_right": ("_left", "_right"), "licks": ("_iteration", "_value")}
@@ -115,6 +116,20 @@ def _check_codes(entry):
         raise RegistryError(f"{entry.path}: codes {list(entry.codes)} do not fit dtype {entry.dtype}")
 
 
+def _check_shape(entry):
+    """A column's variable dimensions come first, then positive fixed ones: the layout a ragged column can hold."""
+    if not entry.destination.endswith("_column"):
+        return
+    variable = 0
+    while variable < len(entry.shape) and entry.shape[variable] is None:
+        variable += 1
+    fixed = entry.shape[variable:]
+    if not all(isinstance(dim, int) and dim > 0 for dim in fixed):
+        raise RegistryError(f"{entry.path}: shape {list(entry.shape)} needs its variable dimensions first and positive fixed ones after")
+    if entry.transform == "per_lick" and (variable != 1 or not fixed):
+        raise RegistryError(f"{entry.path}: per_lick needs one variable dimension (the licks) and the fixed shape of each value")
+
+
 def _check_field(entry):
     path = entry.path
     if entry.destination not in DESTINATIONS:
@@ -129,6 +144,8 @@ def _check_field(entry):
         raise RegistryError(f"{path}: a dropped field needs notes saying why")
     if entry.destination not in _UNSTORED and not (entry.name and entry.dtype and entry.shape is not None):
         raise RegistryError(f"{path}: a stored field needs name, dtype and shape")
+    if entry.shape is not None:
+        _check_shape(entry)
     if entry.in_spec and entry.destination not in SPEC_DESTINATIONS:
         raise RegistryError(f"{path}: in_spec needs a spec destination, not {entry.destination!r}")
     if entry.in_spec and not entry.meaning_known:

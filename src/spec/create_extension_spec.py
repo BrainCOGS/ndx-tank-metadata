@@ -59,8 +59,9 @@ def _column_specs(field):
             )
             continue
         depth = sum(dim is None for dim in field.shape)
-        fixed = field.shape if depth == 0 else ()
-        shape = {"shape": [None, *fixed], "dims": ["num_rows", *_dims(fixed)]} if fixed else {}
+        fixed = field.shape[depth:]
+        first = "num_rows" if depth == 0 else "num_values"
+        shape = {"shape": [None, *fixed], "dims": [first, *_dims(fixed)]} if fixed else {}
         specs.append(
             NWBDatasetSpec(
                 name=name, neurodata_type_inc="VectorData", dtype=field.dtype, doc=field.doc, quantity="?", **shape

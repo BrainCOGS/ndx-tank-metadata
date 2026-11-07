@@ -1002,6 +1002,27 @@ groups:
     - 4
     doc: Start position of the trial as [x, y, z, theta].
     quantity: '?'
+  - name: state_ports
+    neurodata_type_inc: VectorData
+    dtype: bool
+    dims:
+    - num_values
+    - dim_0
+    - dim_1
+    shape:
+    - null
+    - 2
+    - 5
+    doc: 'Lick port readings at each lick: one 2x5 array per lick, in the order of
+      licks_iteration. Row r is the port that licks_value calls r, which the task
+      scores as choice L for 1 and R for 2. Columns are the last 5 readings, newest
+      first. With the default lickometer logic, False is contact and True is no contact;
+      version.rig.lickometer_logic PULL-DOWN inverts that.'
+    quantity: '?'
+  - name: state_ports_index
+    neurodata_type_inc: VectorIndex
+    doc: Index into state_ports, which has a variable number of values per row.
+    quantity: '?'
   - name: step_size
     neurodata_type_inc: VectorData
     dtype: float32

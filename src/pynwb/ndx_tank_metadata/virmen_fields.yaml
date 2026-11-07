@@ -1312,9 +1312,14 @@ fields:
   in_spec: true
   description: "Start position of the trial as [x, y, z, theta]."
 - path: log.block.trial.state_ports
-  destination: drop
-  description: "Cell of lick port states at each lick."
-  notes: "GUI, roster, debug or in-progress state, not part of the session record (issue #3)."
+  destination: trial_column
+  name: "state_ports"
+  dtype: bool
+  shape: [null, 2, 5]
+  transform: per_lick
+  in_spec: true
+  description: "Lick port readings at each lick: one 2x5 array per lick, in the order of licks_iteration. Row r is the port that licks_value calls r, which the task scores as choice L for 1 and R for 2. Columns are the last 5 readings, newest first. With the default lickometer logic, False is contact and True is no contact; version.rig.lickometer_logic PULL-DOWN inverts that."
+  notes: "ExperimentLog.logTick appends vr.lickPortStates with each lick when it reads the ports, and never in lick-counter mode, which leaves every trial empty. isLick2 calls a lick two contact readings after one without; in all 12,435 snapshots of the 6 surveyed logs that have it, the row showing that change is the one licks_value names. The comment where the experiments set up lickPortStates says row 1 is right, but isLick2 and Choice(vr.isLick) make it L."
 - path: log.block.trial.steadyState
   destination: trial_column
   name: "steadyState"
