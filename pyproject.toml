@@ -50,9 +50,18 @@ exclude = [".git*", "src/matnwb"]
 
 [dependency-groups]
 dev = [
-    "pytest>=8.3.5",
+    "pytest>=9.0.3",
     "tomli>=2; python_version < '3.11'",
 ]
 
 [tool.pytest.ini_options]
 markers = ["packaging: builds and installs release artifacts in isolated Python 3.13 environments"]
+
+[tool.uv]
+# Delay routine dependency updates while admitting the audited pytest fix.
+exclude-newer = "7 days"
+preview-features = ["audit-command"]
+
+[tool.uv.dependency-groups]
+# Patched pytest requires 3.10; the published package still supports 3.9.
+dev = { requires-python = ">=3.10" }
