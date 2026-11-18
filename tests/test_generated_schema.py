@@ -166,6 +166,12 @@ class TestSpecMatchesRegistry:
         assert declared["startPosition"].shape == [None, 4]
         assert declared["startPosition"].dims[0] == "num_rows"
 
+    def test_block_motion_blur_range_is_a_fixed_pair_per_epoch(self):
+        declared = {d.name: d for d in _spec("VirmenEpochs").datasets}
+        assert declared["motionBlurRange"].shape == [None, 2]
+        assert declared["motionBlurRange"].dtype == "float64"
+        assert "motionBlurRange_index" not in declared
+
     def test_stimulus_pair_is_a_region_column(self):
         declared = {d.name: d for d in _spec("VirmenTrials").datasets}
         assert declared["stimulus_pair"].neurodata_type_inc == "DynamicTableRegion"

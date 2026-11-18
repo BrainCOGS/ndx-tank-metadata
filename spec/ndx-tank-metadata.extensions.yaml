@@ -1186,6 +1186,18 @@ groups:
     dtype: int32
     doc: Number of maze run in block.
     quantity: '?'
+  - name: motionBlurRange
+    neurodata_type_inc: VectorData
+    dtype: float64
+    dims:
+    - num_rows
+    - dim_0
+    shape:
+    - null
+    - 2
+    doc: Motion-blur range applied to cues during the block, [low, high]. NaN, NaN
+      when the block sets none.
+    quantity: '?'
   - name: rewardMiL
     neurodata_type_inc: VectorData
     dtype: float64

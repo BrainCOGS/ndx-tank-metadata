@@ -603,9 +603,13 @@ fields:
   in_spec: true
   description: "Number of maze run in block."
 - path: log.block.motionBlurRange
-  destination: drop
-  description: "Motion blur range in effect."
-  notes: "GUI, roster, debug or in-progress state, not part of the session record (issue #3)."
+  destination: epoch_column
+  name: "motionBlurRange"
+  dtype: float64
+  shape: [2]
+  transform: empty_to_missing
+  in_spec: true
+  description: "Motion-blur range applied to cues during the block, [low, high]. NaN, NaN when the block sets none."
 - path: log.block.rewardMiL
   destination: epoch_column
   name: "rewardMiL"

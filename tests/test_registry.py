@@ -363,6 +363,16 @@ class TestClockDecisions:
         assert "stays in the raw log" in field.notes
 
 
+def test_block_motion_blur_range_is_a_pair_per_block():
+    """Logs store [] when no blur is set and [low high] otherwise, such as [1 50]. Empty becomes [NaN, NaN]."""
+    field = load_registry()["log.block.motionBlurRange"]
+    assert (field.destination, field.name, field.dtype, field.shape, field.transform) == (
+        "epoch_column", "motionBlurRange", "float64", (2,), "empty_to_missing")
+    assert field.in_spec
+    # The animal's setting is a separate attribute and stays one.
+    assert load_registry()["log.animal.motionBlurRange"].destination == "animal_attribute"
+
+
 def test_difficulty_set_holds_a_percent_mix_or_a_scalar():
     """Some logs store one false, others the percent of easy, medium and hard trials, such as [50, 50, 0]."""
     field = load_registry()["log.block.trialParams.difficultySet"]
